@@ -131,7 +131,8 @@ O check MCP exige acesso ao serviço. Ao terminar, confirme skills e Context7 nu
 nova sessão Codex; isso não é inferido da presença dos executáveis no PATH.
 
 O assistente usa `check-memory-mcp.py --status-only`: valida initialize, catálogo e
-status, mas não executa busca num projeto ainda não registrado no servidor. A
+status global por `ai-memory status --json`. Não chama `memory_status` nem busca
+no escopo de um projeto ainda não registrado no servidor. A
 primeira sessão real do agente registra o escopo. Depois dela, o comando sem essa
 opção também testa a busca com workspace/project explícitos. Não são criadas
 sessões artificiais nem páginas de teste para contornar essa etapa.

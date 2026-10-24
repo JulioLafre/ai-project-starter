@@ -13,7 +13,7 @@ import tomllib
 def main():
     parser = argparse.ArgumentParser(description="Verifica o bridge MCP instalado, sem escrita de memórias.")
     parser.add_argument("--status-only", action="store_true",
-                        help="Valida conexão/status antes de a primeira sessão registrar o projeto")
+                        help="Valida conexão, catálogo e status global antes de registrar o projeto")
     args = parser.parse_args()
     marker_path = Path(__file__).resolve().parents[1] / ".ai-memory.toml"
     if not marker_path.is_file():
@@ -66,17 +66,27 @@ def main():
         request("notifications/initialized", {}, None)
         names = {tool["name"] for tool in request("tools/list", {}, 2)["tools"]}
         assert {"memory_status", "memory_query"} <= names
-        request("tools/call", {"name": "memory_status", "arguments": {
-            "workspace": marker["workspace"], "project": marker["project"],
-        }}, 3)
-        # Static Codex clients must supply the marker's exact project scope.
-        if not args.status_only:
+        if args.status_only:
+            # A new scope does not exist until the first real lifecycle event.
+            try:
+                subprocess.run(["ai-memory", "status", "--json"], check=True,
+                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=20)
+            except (OSError, subprocess.SubprocessError):
+                raise SystemExit("Status do serviço indisponível. Confira ai-memory status --json "
+                                 "e as permissões de rede/sandbox.") from None
+        else:
+            # Static Codex clients must supply the marker's exact project scope.
+            request("tools/call", {"name": "memory_status", "arguments": {
+                "workspace": marker["workspace"], "project": marker["project"],
+            }}, 3)
             request("tools/call", {"name": "memory_query", "arguments": {
                 "workspace": marker["workspace"], "project": marker["project"],
                 "query": "development environment validation", "limit": 1,
             }}, 4)
         print(json.dumps({"initialize": "pass", "server": initialized["serverInfo"],
-                          "tool_count": len(names), "memory_status": "pass",
+                          "tool_count": len(names),
+                          "service_status": "pass" if args.status_only else "not_requested",
+                          "memory_status": "not_requested" if args.status_only else "pass",
                           "memory_query": "not_requested" if args.status_only else "pass", "writes": 0}))
     finally:
         selector.close()

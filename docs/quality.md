@@ -10,7 +10,7 @@ Python 3.11+ é usado apenas para os checks da base; não escolhe a linguagem do
 | Integridade do diff | `git diff --check` | Executável agora; não cobre arquivos untracked |
 | Política de captura | `python3 scripts/check-capture.py` | Allowlist positiva, negativa e exclusões; não envia eventos |
 | Embeddings locais | `python3 scripts/check-embeddings.py` | Consulta o serviço: MiniLM local e saúde; `pending` significa sem chamadas, não aprovação funcional |
-| MCP AI Memory | `python3 scripts/check-memory-mcp.py` | Initialize, catálogo, status e busca; exige rede local autorizada |
+| MCP AI Memory | `python3 scripts/check-memory-mcp.py` | Após a primeira sessão: status e busca no escopo; antes dela, `--status-only` valida conexão, catálogo e status global |
 | Lint e formato da aplicação | Escolher ferramentas da stack adotada | Não aplicável ainda |
 | Tipos | Comando real do compilador adotado | Não aplicável ainda |
 | Testes | Regressões e comportamento de risco | Não aplicável ainda |
