@@ -39,6 +39,43 @@ Para memória, use `ai-memory status --json` e `ai-memory doctor --json` no ambi
 correto. Executáveis no PATH e entradas de config são pré-requisitos, não provas
 suficientes de funcionamento das integrações.
 
+### Embeddings locais no serviço
+
+Esta base espera o provedor `local`, modelo `all-MiniLM-L6-v2`, com 384 dimensões.
+O modelo pertence ao serviço da máquina e é compartilhado entre os projetos;
+não é instalado dentro de cada repositório. Uma LLM de consolidação é separada
+e não é necessária para essa busca semântica.
+
+Execute o diagnóstico somente leitura:
+
+```bash
+python3 scripts/check-embeddings.py
+```
+
+Ele consulta `ai-memory status --json`, sem gerar embeddings, criar memórias ou
+chamar provedores. Embeddings desativados, em erro ou com outro provedor/modelo
+interrompem o check. O comando mostra também contagens globais de indexação;
+elas não comprovam a indexação de um projeto específico. Zero páginas é válido
+num serviço novo, e páginas ainda não indexadas podem indicar backfill em curso.
+
+O estado `unknown` do AI Memory significa que o provedor ainda não recebeu
+chamadas. Nesse caso, o diagnóstico retorna `pending`, permite preparar o projeto
+e orienta repetir a verificação após a primeira sessão real; não afirma sucesso
+funcional. A conclusão dessa verificação requer `status: ok`.
+
+No primeiro uso, o AI Memory pode baixar o modelo em segundo plano e continuar
+sem embeddings até a próxima inicialização. Confira os logs para confirmar o
+término do download. No Fedora com serviço de usuário, reinicie manualmente:
+
+```bash
+systemctl --user restart ai-memory.service
+python3 scripts/check-embeddings.py
+```
+
+O assistente não reinicia o serviço, baixa modelos ou altera a configuração da
+máquina. Um modelo local diferente exige revisar esta expectativa da base;
+o diagnóstico nunca substitui um provedor existente automaticamente.
+
 ### Captura allowlist na máquina
 
 O serviço e os hooks do AI Memory precisam estar configurados antes de preparar
@@ -80,8 +117,9 @@ Ele não instala pré-requisitos ausentes nem modifica a configuração global. 
 de criar um marcador, exige os executáveis Git, Codex e AI Memory, passa nos testes
 offline e confirma que a política instalada é allowlist. Para um checkout novo,
 pede o escopo e confirmação para captura; depois cria o marcador com as exclusões
-abaixo, testa a captura e consulta o status pelo bridge MCP. Uma configuração existente
-é preservada e validada; nunca é completada ou substituída automaticamente.
+abaixo, testa a captura, diagnostica os embeddings locais e consulta o status pelo
+bridge MCP. Uma configuração existente é preservada e validada; nunca é completada
+ou substituída automaticamente.
 
 Também aceita `--workspace` e `--project` juntos para opt-in sem perguntas. Um
 escopo diferente do marcador atual é recusado. Escolha um par próprio: o comando
@@ -149,6 +187,7 @@ sessões artificiais ou memórias de teste:
 
 ```bash
 python3 scripts/check-capture.py
+python3 scripts/check-embeddings.py
 python3 scripts/check-memory-mcp.py --status-only
 ```
 
@@ -158,12 +197,14 @@ real registra o escopo. Só então execute o diagnóstico que inclui busca:
 
 ```bash
 python3 scripts/check-capture.py
+python3 scripts/check-embeddings.py
 python3 scripts/check-memory-mcp.py
 ai-memory doctor --json
 ```
 
-O primeiro comando é seco: não usa rede nem grava eventos. O segundo usa o
-bridge nativo já instalado, consulta status e busca com escopo explícito, sem
+O primeiro comando é seco: não usa rede nem grava eventos. O diagnóstico de
+embeddings consulta a saúde passiva do serviço, conforme explicado acima.
+O check MCP usa o bridge nativo já instalado, consulta status e busca com escopo explícito, sem
 criar páginas ou chamar LLM. Ele valida esse caminho de acesso; não comprova
 que a configuração MCP do cliente Codex foi carregada.
 
@@ -187,6 +228,8 @@ não uma dependência do template em todas as máquinas.
 | Política diferente de allowlist | Revise a etapa global de hooks antes de ativar um projeto |
 | Marcador com outro escopo | Confira se está na pasta correta; o assistente não troca a identidade existente |
 | Serviço MCP inacessível | Verifique serviço, credencial e restrições de rede/sandbox; o script não inicia o servidor |
+| Embeddings desativados | Confira download/logs e a configuração; após o download inicial reinicie manualmente o serviço e repita o diagnóstico |
+| Embeddings com `pending` | O modelo está configurado, mas ainda sem chamadas; repita o check após a primeira sessão real |
 | Projeto não encontrado na busca | Confirme o escopo e a captura da primeira sessão real do agente; antes disso use `--status-only` |
 | Check falhou após criar o marcador | Corrija o diagnóstico e repita o setup; o marcador existente é preservado |
 | Context7 ou skills ausentes no Codex | Revise a integração do cliente e abra uma nova sessão; o setup não instala plugins |

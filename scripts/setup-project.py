@@ -64,11 +64,13 @@ def main():
         print("Marcador criado com escopo explícito e exclusões de captura.", flush=True)
 
     subprocess.run([sys.executable, str(ROOT / "scripts/check-capture.py")], cwd=ROOT, check=True)
+    subprocess.run([sys.executable, str(ROOT / "scripts/check-embeddings.py")], cwd=ROOT, check=True)
     # A first real agent session registers the scope; do not fabricate one for setup.
     subprocess.run([sys.executable, str(ROOT / "scripts/check-memory-mcp.py"), "--status-only"],
                    cwd=ROOT, check=True)
     print("Projeto preparado: base, política de captura e status do bridge AI Memory passaram nos checks.")
     print("A busca no escopo do projeto fica pendente até a primeira sessão real do agente.")
+    print("Se o diagnóstico MiniLM mostrou pending, repita scripts/check-embeddings.py após essa sessão.")
     print("Abra uma nova sessão Codex e siga docs/start-project.md para verificar skills e Context7.")
 
 

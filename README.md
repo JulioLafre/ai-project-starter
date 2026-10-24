@@ -81,8 +81,13 @@ assistente não verifica exclusividade desses nomes no servidor.
 
 O comando verifica os executáveis necessários, roda os testes da base, confirma
 allowlist e cria um `.ai-memory.toml` local com escopo e exclusões de captura.
-Depois testa a política de captura e a conexão/status do bridge MCP do AI Memory.
+Depois testa a política de captura, diagnostica o MiniLM local no serviço ativo
+e verifica a conexão/status do bridge MCP do AI Memory.
 Configurações existentes são preservadas; um escopo diferente é recusado.
+
+Embeddings desativados, com erro ou com outro provedor/modelo interrompem o setup
+com orientação. Se o MiniLM ainda não recebeu chamadas, o diagnóstico informa
+`pending`; repita `python3 scripts/check-embeddings.py` após a primeira sessão real.
 
 Para informar o escopo sem perguntas, este comando já autoriza o opt-in:
 

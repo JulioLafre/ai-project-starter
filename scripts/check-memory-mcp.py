@@ -66,7 +66,9 @@ def main():
         request("notifications/initialized", {}, None)
         names = {tool["name"] for tool in request("tools/list", {}, 2)["tools"]}
         assert {"memory_status", "memory_query"} <= names
-        request("tools/call", {"name": "memory_status", "arguments": {}}, 3)
+        request("tools/call", {"name": "memory_status", "arguments": {
+            "workspace": marker["workspace"], "project": marker["project"],
+        }}, 3)
         # Static Codex clients must supply the marker's exact project scope.
         if not args.status_only:
             request("tools/call", {"name": "memory_query", "arguments": {

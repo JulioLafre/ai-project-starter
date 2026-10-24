@@ -2,9 +2,11 @@
 
 from pathlib import Path
 import runpy
+import subprocess
 import tempfile
 import tomllib
 import unittest
+from unittest.mock import patch
 
 
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts/setup-project.py"
@@ -47,6 +49,31 @@ class SetupProjectTests(unittest.TestCase):
                         with self.assertRaises(ValueError):
                             create_marker(root, workspace, project)
                         self.assertFalse((root / ".ai-memory.toml").exists())
+
+    def test_embedding_failure_stops_setup_before_mcp_and_preserves_marker(self):
+        setup = runpy.run_path(str(SCRIPT))
+        main = setup["main"]
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            setup["create_marker"](root, "personal", "application")
+            marker = root / ".ai-memory.toml"
+            original = marker.read_bytes()
+
+            def command(args, **kwargs):
+                if args[1] == "hook":
+                    return subprocess.CompletedProcess(args, 0, stdout='{"capture_mode":"allowlist"}')
+                if str(root / "scripts/check-embeddings.py") in args:
+                    raise subprocess.CalledProcessError(1, args)
+                return subprocess.CompletedProcess(args, 0)
+
+            with patch.dict(main.__globals__, ROOT=root), patch("sys.argv", [str(SCRIPT)]), \
+                    patch("shutil.which", return_value="installed"), \
+                    patch("subprocess.run", side_effect=command) as run:
+                with self.assertRaises(subprocess.CalledProcessError):
+                    main()
+            self.assertEqual(marker.read_bytes(), original)
+            self.assertFalse(any("check-memory-mcp.py" in str(call.args[0])
+                                 for call in run.call_args_list))
 
 
 if __name__ == "__main__":
