@@ -7,6 +7,7 @@ Python 3.11+ é usado apenas para os checks da base; não escolhe a linguagem do
 |---|---|---|
 | Integridade do template | `python3 -m unittest discover -s tests -v` | Offline: arquivos exportáveis, links, sintaxe e whitespace |
 | Inicialização segura | Incluída na mesma suíte offline | Criação de escopo e exclusões; configuração existente preservada; entrada inválida recusada |
+| Geração de projetos | Incluída na mesma suíte offline | Pasta/nome próprios, Git independente, exclusões, destino existente preservado e recuperação de falha de setup |
 | Integridade do diff | `git diff --check` | Executável agora; não cobre arquivos untracked |
 | Política de captura | `python3 scripts/check-capture.py` | Allowlist positiva, negativa e exclusões; não envia eventos |
 | Embeddings locais | `python3 scripts/check-embeddings.py` | Consulta o serviço: MiniLM local e saúde; `pending` significa sem chamadas, não aprovação funcional |

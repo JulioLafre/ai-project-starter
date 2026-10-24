@@ -4,9 +4,9 @@ Um ponto de partida reutilizável para desenvolver projetos com **Codex como age
 principal**, instruções compartilhadas, memória entre sessões e verificações de
 qualidade desde o início.
 
-A proposta é reduzir a preparação repetida a cada projeto: você cria um
-repositório a partir desta base, executa um comando de setup e começa a descrever
-seu produto ao agente. Framework, banco, hospedagem e linguagem da aplicação são
+A base funciona como uma fábrica local: você escolhe uma pasta e um nome, gera
+um projeto independente, prepara as integrações e começa a descrever seu produto
+ao agente. Framework, banco, hospedagem e linguagem da aplicação são
 escolhidos depois, conforme os requisitos.
 
 O template reúne documentação, instruções e scripts de preparação. O setup usa
@@ -39,29 +39,48 @@ Se essas integrações ainda não estiverem prontas, comece pelo
 [guia de preparação da máquina](docs/setup.md). Essa etapa é feita uma vez por
 máquina; copiar o template não transporta login, plugins ou serviços.
 
-### 2. Crie o repositório do seu projeto
+### 2. Obtenha a fábrica uma vez
 
-No GitHub, use **Use this template → Create a new repository**, escolha o nome
-do novo projeto e clone **o repositório que você acabou de criar**. Substitua a
-URL no exemplo abaixo pela URL desse novo repositório:
+Clone esta base em uma pasta própria. Essa pasta guarda a fábrica; o produto será
+criado em outra pasta, com o nome escolhido por você:
 
 ```bash
-git clone "URL_DO_SEU_NOVO_REPOSITORIO" meu-projeto
-cd meu-projeto
+git clone https://github.com/JulioLafre/ai-project-starter.git
+cd ai-project-starter
 ```
 
-Esse fluxo está descrito na [documentação de templates do GitHub](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template).
+Se já clonou a base, use essa cópia. Não é necessário criar um repositório no
+GitHub antes de começar o desenvolvimento local.
 
-**Alternativa sem criar um repositório no GitHub:** baixe o ZIP desta base,
-extraia o conteúdo em uma pasta para seu projeto, abra o terminal nessa pasta e
-execute `git init`. Os arquivos como README.md e AGENTS.md devem ficar na raiz
-dessa pasta. Não copie o diretório de trabalho de outra pessoa com seus dados locais.
+### 3. Gere um projeto com pasta e nome próprios
 
-### 3. Prepare o projeto com um comando
-
-Dentro da pasta do novo projeto:
+Na pasta da fábrica:
 
 ```bash
+python3 scripts/create-project.py
+```
+
+Exemplo de respostas:
+
+```text
+Pasta base [~/dev/projetos]: ~/dev/projetos
+Nome do projeto: controle-financeiro
+Novo projeto: .../dev/projetos/controle-financeiro
+Criar neste caminho? [s/N]: s
+Executar a preparação agora? [s/N]: s
+```
+
+O gerador copia somente arquivos versionados da base, excluindo dados locais.
+Cria um Git novo na branch `main`, sem histórico, remoto ou commit herdados, e um
+README com o nome escolhido. Recusa destinos existentes e pastas dentro da fábrica.
+Links simbólicos versionados são recusados. Não desenvolva o produto na fábrica.
+
+O assistente oferece executar o setup já na pasta nova. Se preferir preparar
+depois, ou se algum diagnóstico falhar, a pasta gerada é preservada. Entre nela
+e execute:
+
+```bash
+cd ~/dev/projetos/controle-financeiro
 python3 scripts/setup-project.py
 ```
 
@@ -70,11 +89,12 @@ captura. Exemplo de respostas:
 
 ```text
 Workspace: pessoal
-Projeto: controle-financeiro
+Projeto [controle-financeiro]:
 Ativar captura neste projeto? [s/N]: s
 ```
 
 **Workspace** agrupa projetos; **projeto** identifica o histórico desta aplicação.
+Enter aceita o nome da pasta sugerido para o projeto. Isso não muda a pasta física.
 Use nomes em minúsculas, com letras, números, ponto, hífen ou underscore. Para
 uma aplicação nova, escolha um par que ainda não pertença a outro projeto. O
 assistente não verifica exclusividade desses nomes no servidor.
@@ -95,7 +115,7 @@ Para informar o escopo sem perguntas, este comando já autoriza o opt-in:
 python3 scripts/setup-project.py --workspace pessoal --project controle-financeiro
 ```
 
-### 4. Abra o Codex e descreva o produto
+### 4. Abra o Codex dentro do projeto gerado
 
 Após o setup concluir:
 
@@ -112,12 +132,33 @@ Com os hooks funcionando, a primeira sessão real registra o projeto no AI Memor
 Por isso, a busca nesse escopo novo fica pendente durante o setup; ela pode ser
 testada depois. Os detalhes estão no [guia de setup e diagnóstico](docs/setup.md).
 
+### 5. Publique no GitHub quando desejar
+
+O projeto gerado não tem remoto. Crie um repositório vazio no GitHub e execute
+na pasta do projeto, substituindo a URL:
+
+```bash
+git add .
+git commit -m "Initial commit"
+git remote add origin URL_DO_SEU_REPOSITORIO
+git push -u origin main
+```
+
+Revise os arquivos antes de adicionar e enviar. A fábrica não cria repositórios
+no GitHub nem faz commits ou push por você.
+
+**Alternativa:** o uso pelo botão **Use this template** do GitHub e por ZIP
+continua possível. Nesse caso, obtenha a base diretamente na pasta do produto,
+inicialize Git se necessário e execute `python3 scripts/setup-project.py` ali.
+O gerador requer uma cópia Git da fábrica; ele não exporta arquivos não versionados.
+
 ## O que você recebe
 
 | Arquivo | Uso |
 |---|---|
 | [AGENTS.md](AGENTS.md) | Instruções dos agentes e roteamento de memória |
 | [CLAUDE.md](CLAUDE.md) | Importação das mesmas instruções para compatibilidade |
+| [scripts/create-project.py](scripts/create-project.py) | Gerador de projetos locais com nome, pasta e Git independentes |
 | [scripts/setup-project.py](scripts/setup-project.py) | Assistente de preparação de cada projeto |
 | [docs/setup.md](docs/setup.md) | Pré-requisitos, configuração e diagnóstico |
 | [docs/start-project.md](docs/start-project.md) | Prompt para começar a definir o produto |

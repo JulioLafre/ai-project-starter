@@ -1,6 +1,8 @@
 """Project initialization must never overwrite configuration or accept TOML injection."""
 
 from pathlib import Path
+import contextlib
+import io
 import runpy
 import subprocess
 import tempfile
@@ -74,6 +76,30 @@ class SetupProjectTests(unittest.TestCase):
             self.assertEqual(marker.read_bytes(), original)
             self.assertFalse(any("check-memory-mcp.py" in str(call.args[0])
                                  for call in run.call_args_list))
+
+    def test_interactive_setup_suggests_folder_name_and_still_requires_capture_opt_in(self):
+        main = runpy.run_path(str(SCRIPT))["main"]
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "meiproject"
+            root.mkdir()
+            for consent in ("n", "s"):
+                with self.subTest(consent=consent), \
+                        patch.dict(main.__globals__, ROOT=root), \
+                        patch("sys.argv", [str(SCRIPT)]), \
+                        patch("shutil.which", return_value="installed"), \
+                        patch("subprocess.run", return_value=subprocess.CompletedProcess(
+                            [], 0, stdout='{"capture_mode":"allowlist"}')), \
+                        patch("builtins.input", side_effect=["pessoal", "", consent]) as prompt, \
+                        contextlib.redirect_stdout(io.StringIO()):
+                    if consent == "n":
+                        with self.assertRaises(SystemExit):
+                            main()
+                        self.assertFalse((root / ".ai-memory.toml").exists())
+                    else:
+                        main()
+                        marker = tomllib.loads((root / ".ai-memory.toml").read_text())
+                        self.assertEqual((marker["workspace"], marker["project"]), ("pessoal", "meiproject"))
+                    self.assertIn("meiproject", prompt.call_args_list[1].args[0])
 
 
 if __name__ == "__main__":

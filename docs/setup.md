@@ -1,8 +1,8 @@
 # Instalação, configuração e diagnóstico
 
-O uso tem duas etapas: preparar as integrações na máquina uma vez e executar o
-assistente em cada projeto novo. Este repositório fornece a segunda etapa e os
-checks; não é um instalador global de ferramentas.
+O uso tem duas etapas: preparar as integrações na máquina uma vez e usar a
+fábrica para gerar e preparar cada projeto novo. Este repositório fornece o
+gerador, o assistente e os checks; não é um instalador global de ferramentas.
 
 O fluxo de referência foi validado no Fedora/Linux. Outros sistemas operacionais
 ainda precisam de validação. Comece pelo [passo a passo do README](../README.md)
@@ -103,9 +103,47 @@ ferramentas e stacks que esta base não exige; adote apenas o escopo necessário
 
 ## 2. Preparar cada projeto
 
-Crie um repositório novo pelo template ou extraia o ZIP em uma pasta própria.
-Se usou ZIP, execute `git init` na pasta extraída. Entre na raiz do projeto, onde
-estão AGENTS.md, README.md e a pasta scripts, antes de executar o assistente.
+### Gerar a partir da fábrica
+
+Na cópia Git desta base, execute:
+
+```bash
+python3 scripts/create-project.py
+```
+
+Informe a pasta base e o nome do projeto; Enter aceita `~/dev/projetos` como pasta
+base. Use um nome em minúsculas, sem espaços, acentos ou barras. O caminho completo
+é mostrado antes da confirmação. Um nome `meiproject` cria a subpasta `meiproject`
+na pasta base escolhida. Destinos existentes, inclusive links, são recusados;
+o destino também não pode ficar dentro da própria fábrica.
+
+O gerador copia arquivos versionados regulares do checkout, incluindo alterações
+locais nesses arquivos. Arquivos não versionados não são distribuídos. Ele exclui
+o marcador, dados locais e caminhos de credenciais conhecidos mesmo se tiverem
+sido adicionados ao índice por engano. Isso não detecta segredos dentro de
+arquivos comuns: revise a fábrica antes de distribuir projetos. Links simbólicos
+versionados e arquivos versionados ausentes são recusados antes de criar a pasta.
+
+O projeto recebe README com seu nome e um Git independente na branch `main`, sem
+histórico, remoto ou commit inicial. A configuração global do Git não é alterada.
+O gerador requer Git e Python, mas é possível gerar antes de instalar Codex e
+AI Memory; nesse caso, a preparação ficará pendente.
+
+Depois de gerar, o assistente oferece executar o setup dentro do destino. É esse
+setup que pede workspace e autorização de captura, sugerindo o nome da pasta
+para o identificador de memória. O projeto novo nunca herda o marcador da fábrica.
+O gerador não abre o Codex nem publica no GitHub.
+
+Se recusar a preparação ou ela falhar, a pasta é preservada. Entre no destino e
+execute novamente `python3 scripts/setup-project.py`. Uma geração incompleta
+também é preservada para inspeção; não repita sobre a mesma pasta esperando
+sobrescrever arquivos. Veja no README os comandos para publicar posteriormente.
+
+### Preparar uma pasta de projeto existente
+
+O uso por template do GitHub ou ZIP continua disponível como alternativa. Se usou
+ZIP, execute `git init` na pasta extraída. Entre na raiz do projeto, onde estão
+AGENTS.md, README.md e a pasta scripts, antes de executar o assistente.
 
 O caminho recomendado é o assistente local:
 
@@ -124,6 +162,10 @@ ou substituída automaticamente.
 Também aceita `--workspace` e `--project` juntos para opt-in sem perguntas. Um
 escopo diferente do marcador atual é recusado. Escolha um par próprio: o comando
 não reserva nomes nem confirma exclusividade no servidor.
+
+No modo interativo, Enter no campo `Projeto [nome-da-pasta]` aceita a sugestão;
+o workspace continua explícito. Essa identidade só organiza a memória e não
+renomeia nem move a pasta do projeto.
 
 Se um diagnóstico falhar depois da criação, o marcador permanece local. Corrija
 o problema e execute o comando novamente; não há rollback que apague configurações.

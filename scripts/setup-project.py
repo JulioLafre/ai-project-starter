@@ -57,7 +57,7 @@ def main():
         if workspace is None:
             print("O marcador autoriza captura neste repositório. Escolha um escopo próprio; não cole segredos.")
             workspace = input("Workspace: ").strip()
-            project = input("Projeto: ").strip()
+            project = input(f"Projeto [{ROOT.name}]: ").strip() or ROOT.name
             if input("Ativar captura neste projeto? [s/N]: ").strip().lower() != "s":
                 raise SystemExit("Preparação cancelada; marcador não criado.")
         create_marker(ROOT, workspace, project)
