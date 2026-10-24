@@ -1,0 +1,13 @@
+.setup/
+.ai-memory.toml
+.agents/
+.codex/
+reports/
+__pycache__/
+*.pyc
+.env
+.env.*
+!.env.example
+secrets/
+*.pem
+*.key
